@@ -1,6 +1,6 @@
 # Unused files
 
-Unused files searched javascript/typescript project for files that are not imported by any other file. Written to help find old files in a large react-native project after rewriting a large amount of the codebase.
+Unused files search's javascript/typescript projects for files that are not imported by any other file(unused). Written to help find old files in a large react-native project after rewriting a lot of the codebase (but forgetting to delete old files).
 
 # Usage
 

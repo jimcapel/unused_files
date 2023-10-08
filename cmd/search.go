@@ -37,7 +37,7 @@ var searchCmd = &cobra.Command{
 		var files []file
 		var usedFiles []file
 
-		fileExtensionsToSkip := [3]string{".ttf", ".json", ".png"}
+		fileExtensionsToInclude := [2]string{".ts", ".tsx"}
 
 		//	find a good value to use
 		maxCapacity := 1000000
@@ -52,7 +52,7 @@ var searchCmd = &cobra.Command{
 		//	first, we walk the tree and append all file paths & names (without the extension, as extension isn't needed for js import) to a slice.
 		filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 			if err == nil {
-				if !d.Type().IsDir() && !slices.Contains(fileExtensionsToSkip[:], filepath.Ext(d.Name())) {
+				if !d.Type().IsDir() && slices.Contains(fileExtensionsToInclude[:], filepath.Ext(d.Name())) {
 					files = append(files, file{path: path, name: d.Name()[:len(d.Name())-len(filepath.Ext(d.Name()))]})
 				}
 

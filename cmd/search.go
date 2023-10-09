@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,13 +25,14 @@ type file struct {
 // searchCmd represents the search command
 var searchCmd = &cobra.Command{
 	Use:   "search",
-	Short: "Searched a directory for unused files",
+	Short: "Search a directory for any unused files",
 	Long:  `Recursively searches a directory for any files that are not imported by any other files. Specifically for javascript/typescript projects.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		start := time.Now()
 
-		r := new(big.Int)
-		fmt.Println(r.Binomial(1000, 10))
+		performanceFlagSet, _ := cmd.Flags().GetBool("performance")
+		performanceFlagSetShorthand, _ := cmd.Flags().GetBool("p")
+
+		start := time.Now()
 
 		var files []file
 		var usedFiles []file
@@ -50,6 +50,7 @@ var searchCmd = &cobra.Command{
 
 		fmt.Printf("Search with root @ %s\n", root)
 		//	first, we walk the tree and append all file paths & names (without the extension, as extension isn't needed for js import) to a slice.
+		//	we also exclude any files with extensions not matching .ts/.tsx/.js/.jsx
 		filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 			if err == nil {
 				if !d.Type().IsDir() && slices.Contains(fileExtensionsToInclude[:], filepath.Ext(d.Name())) {
@@ -63,11 +64,9 @@ var searchCmd = &cobra.Command{
 		})
 
 		/*
-			we iterate over the files, this time opening each file and checking if any of the other file names are present
+			We iterate over the files, this time opening each file and checking if any of the other file names are present
 
-			if a fileName is not present, we append the file paths & names to unusedFileNames and remove from the fileNames slice
-
-			on each new iteration, we check if the file is in unusedFile
+			If a fileName is present, we append the files path & name to usedFiles.
 		*/
 
 		for i := 0; i < len(files); i++ {
@@ -85,13 +84,16 @@ var searchCmd = &cobra.Command{
 
 					words := strings.Split(scanner.Text(), " ")
 
+					/*	if a line contains the words const/export/type, we can be certain that we have passed the imports
+						and therefore can stop looking in this particular file
+					*/
 					if slices.Contains(words, "const") || slices.Contains(words, "export") || slices.Contains(words, "type") || slices.Contains(words, "enum") {
 						break
 					}
 
-					//	search for the filename
+					//	Search for the filename
 					for j := 0; j < len(files); j++ {
-						//	we don't want to search a file for it's own name, or if the file has already been found
+						//	We don't want to search a file for it's own name, or if the file has already been found
 						if j == i || slices.Contains(usedFiles, files[j]) {
 							continue
 						}
@@ -123,14 +125,21 @@ var searchCmd = &cobra.Command{
 
 		}
 
-		elapsed := time.Since(start)
-		log.Printf("Binomial took %s", elapsed)
+		if performanceFlagSet || performanceFlagSetShorthand {
+			elapsed := time.Since(start)
+			log.Printf("Binomial took %s", elapsed)
+
+		}
 
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(searchCmd)
+
+	searchCmd.PersistentFlags().Bool("performance", false, "Used to report the run-time of the search command")
+
+	searchCmd.PersistentFlags().Bool("p", false, "shorthand for performance flag, which is used to report the run-time of the search command")
 
 	// Here you will define your flags and configuration settings.
 

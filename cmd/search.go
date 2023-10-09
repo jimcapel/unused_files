@@ -37,7 +37,7 @@ var searchCmd = &cobra.Command{
 		var files []file
 		var usedFiles []file
 
-		fileExtensionsToInclude := [2]string{".ts", ".tsx"}
+		fileExtensionsToInclude := [4]string{".ts", ".tsx", ".js", ".jsx"}
 
 		//	find a good value to use
 		maxCapacity := 1000000
